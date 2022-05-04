@@ -1,0 +1,691 @@
+---
+title: "Analysis of information source and health protective behaviours"
+author: "Huiyi Hu"
+date: '2022-04-29'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(knitr)
+library(psych)
+library(likert)
+
+edu_levels <- c(
+  "Bachelors or equivalent", 
+  "Masters or other postgraduate qualification", 
+  "Doctorate", 
+  "Other") 
+
+
+use_levels <- c(
+  "None", 
+  "Not very much", 
+  "A fair amount", 
+  "A lot") 
+
+
+trust_levels <- c(
+  "Very distrustful", 
+  "Distrustful", 
+  "Neutral", 
+  "Trustful", 
+  "Very trustful") 
+
+
+likert_levels <- c(
+  "Strongly disagree", 
+  "Disagree", 
+  "Neutral", 
+  "Agree", 
+  "Strongly agree")    
+
+hpb_levels <- c(
+  "Not at all", 
+  "Sometimes", 
+  "Often", 
+  "Always")
+
+
+    
+d_infohpb <- read.csv('../data/info-hpb-database.csv',colClasses = "factor")
+
+
+d_infohpb$age <- factor(d_infohpb$age,ordered = TRUE)
+d_infohpb$gender <- factor(d_infohpb$gender,ordered = TRUE)
+d_infohpb$ukstu <- factor(d_infohpb$ukstu)
+d_infohpb$edqual <- factor(d_infohpb$edqual,
+                             levels=edu_levels,
+                             ordered = TRUE)
+d_infohpb$vcamp <- factor(d_infohpb$vcamp)
+d_infohpb$infomost <- factor(d_infohpb$infomost)
+d_infohpb$use_news <- factor(d_infohpb$use_news,
+                             levels=use_levels,
+                             ordered = TRUE)
+d_infohpb$use_gov <- factor(d_infohpb$use_gov,
+                             levels=use_levels,
+                             ordered = TRUE)
+d_infohpb$use_uni <- factor(d_infohpb$use_uni,
+                             levels=use_levels,
+                             ordered = TRUE)
+d_infohpb$use_smed <- factor(d_infohpb$use_smed,
+                             levels=use_levels,
+                             ordered = TRUE)
+d_infohpb$use_web <- factor(d_infohpb$use_web,
+                             levels=use_levels,
+                             ordered = TRUE)
+d_infohpb$use_ff <- factor(d_infohpb$use_ff,
+                             levels=use_levels,
+                             ordered = TRUE)
+d_infohpb$use_doc <- factor(d_infohpb$use_doc,
+                             levels=use_levels,
+                             ordered = TRUE)
+d_infohpb$tru_news <- factor(d_infohpb$tru_news,
+                             levels=trust_levels,
+                             ordered = TRUE)
+d_infohpb$tru_gov <- factor(d_infohpb$tru_gov,
+                             levels=trust_levels,
+                             ordered = TRUE)
+d_infohpb$tru_uni <- factor(d_infohpb$tru_uni,
+                             levels=trust_levels,
+                             ordered = TRUE)
+d_infohpb$tru_smed <- factor(d_infohpb$tru_smed,
+                             levels=trust_levels,
+                             ordered = TRUE)
+d_infohpb$tru_web <- factor(d_infohpb$tru_web,
+                             levels=trust_levels,
+                             ordered = TRUE)
+d_infohpb$tru_ff <- factor(d_infohpb$tru_ff,
+                             levels=trust_levels,
+                             ordered = TRUE)
+d_infohpb$tru_doc <- factor(d_infohpb$tru_doc,
+                             levels=trust_levels,
+                             ordered = TRUE)
+d_infohpb$covid_aff <- factor(d_infohpb$covid_aff,
+                             levels=likert_levels,
+                             ordered = TRUE)
+d_infohpb$info_worrry <- factor(d_infohpb$info_worrry,
+                             levels=likert_levels,
+                             ordered = TRUE)
+d_infohpb$covid_sick <- factor(d_infohpb$covid_sick,
+                             levels=likert_levels,
+                             ordered = TRUE)
+d_infohpb$hp_hand <- factor(d_infohpb$hp_hand,
+                             levels=hpb_levels,
+                             ordered = TRUE)
+d_infohpb$hp_supp <- factor(d_infohpb$hp_supp,
+                             levels=hpb_levels,
+                             ordered = TRUE)
+d_infohpb$hp_clean <- factor(d_infohpb$hp_clean,
+                             levels=hpb_levels,
+                             ordered = TRUE)
+d_infohpb$hp_mask <- factor(d_infohpb$hp_mask,
+                             levels=hpb_levels,
+                             ordered = TRUE)
+d_infohpb$hp_win <- factor(d_infohpb$hp_win,
+                             levels=hpb_levels,
+                             ordered = TRUE)
+d_infohpb$hp_sdist <- factor(d_infohpb$hp_sdist,
+                             levels=hpb_levels,
+                             ordered = TRUE)
+d_infohpb$hp_dietexc <- factor(d_infohpb$hp_dietexc,
+                             levels=hpb_levels,
+                             ordered = TRUE)
+d_infohpb$hp_avdpt <- factor(d_infohpb$hp_avdpt,
+                             levels=hpb_levels,
+                             ordered = TRUE)
+d_infohpb$hp_onlime <- factor(d_infohpb$hp_onlime,
+                             levels=hpb_levels,
+                             ordered = TRUE)
+d_infohpb$hp_home <- factor(d_infohpb$hp_home,
+                             levels=hpb_levels,
+                             ordered = TRUE)
+
+
+d_infohpb <- d_infohpb %>%
+  mutate(
+    across(
+      .cols = c(starts_with('use'),starts_with('tru'),starts_with('hp')),
+      .fns = as.numeric,
+      .names = '{.col}_coded'
+    )
+   )
+
+
+names(d_infohpb)[48:57]
+d_infohpb$hpb_scores <- rowSums(d_infohpb[ , c(48:57)])
+
+
+dt_infouse <- d_infohpb[, c("use_news","use_gov","use_uni","use_smed","use_web","use_ff","use_doc")]
+
+
+dt_infotrust <- d_infohpb[, c("tru_news","tru_gov","tru_uni","tru_smed","tru_web","tru_ff","tru_doc")]
+
+dt_hpb <- d_infohpb[, c("hp_hand","hp_supp","hp_clean","hp_mask","hp_win","hp_sdist","hp_dietexc","hp_avdpt","hp_onlime","hp_home")]
+
+```
+
+# 1. Demographic characteristics of the sample
+```{R}
+summary(d_infohpb)
+
+```
+
+## 1.1 Age
+```{r}
+d_infohpb %>%
+  count(age)
+
+d_infohpb %>%
+  ggplot(aes(x = age)) +
+  geom_bar()+
+  ggtitle('Gender of respondents')
+```
+## 1.2 Gender
+```{r}
+d_infohpb %>%
+  count(gender)
+
+d_infohpb %>%
+  ggplot(aes(x = gender)) +
+  geom_bar()
+```
+## 1.3 Current educational qualifications
+```{r}
+d_infohpb %>%
+  count(edqual)
+
+d_infohpb %>%
+  ggplot(aes(x = edqual)) +
+  geom_bar() +
+  coord_flip()
+```
+## 1.4 Visiting campus
+```{r}
+d_infohpb %>%
+  count(vcamp)
+
+d_infohpb %>%
+  ggplot(aes(x = vcamp)) +
+  geom_bar() +
+  coord_flip()
+```
+## 1.5 Health protective behaviour
+```{r}
+coded_summary<- d_infohpb %>%
+  select(ends_with('_coded'))
+
+
+# Mean value---Health protective behaviours
+  coded_summary %>%
+  select(starts_with('hp_'))%>%
+  lapply(
+    mean, na.rm = TRUE
+  ) 
+
+# Median---Health protective behaviours
+coded_summary %>%
+  select(starts_with('hp_'))%>%
+  lapply(
+    median, na.rm = TRUE
+  )
+
+# Standard deviation ---Health protective behaviours
+coded_summary %>%
+  select(starts_with('hp_'))%>%
+  lapply(
+    SD, na.rm = TRUE
+  )
+
+```
+
+# 2. Descriptive Statistics
+## 2.1(a)Information Source used most
+```{r}
+d_infohpb %>%
+  count(infomost)
+
+
+d_infohpb %>%
+  ggplot(aes(x =  infomost)) +
+  geom_bar() +
+  ggtitle('Number of Covid-19 information source mostly used')+
+  coord_flip()
+```
+
+## 2.2 hp behaviour scores (grouped by information source used most)
+```{R}
+ggplot(data = d_infohpb, mapping = aes(x = infomost, y = hpb_scores)) + 
+  geom_boxplot(add = "jitter") +
+  scale_x_discrete(name = NULL, limits = c(
+    "News Media    (e.g. news from TV, radio, newspaper and/or through their websites)","Government Sources & Other Official Sources   (e.g. GOV.UK, NHS, WHO)","Communications from Universities   (e.g. emails, posters around campus, messages from tutors)","Social Media   (e.g. Facebook, Twitter, YouTube, Weibo, Xiaohongshu)","Websites   (e.g. web surfing on non-official sources, podcasts)","Family, Friends or Collegues","Doctor or Medical Provider"),
+                   labels= c("News Media","Government & other official sources","Communications from Universities","Social Media","Websites of non-official source","Family, Friends or Collegues","Doctor or Medical Provider"))+
+  coord_flip()
+```
+
+
+## 2.3 covidworry~hpb_scores(by infomost)
+```{R}
+
+d_infohpb <- d_infohpb %>%
+  mutate(
+    across(
+      .cols = c(covid_aff,info_worrry,covid_sick),
+      .fns = as.numeric,
+      .names = '{.col}_coded'
+    )
+   )
+
+names(d_infohpb)[59:61]
+d_infohpb$worry_level <- rowSums(d_infohpb[ , c(59:61)])
+
+
+ggplot(d_infohpb,aes(hpb_scores, worry_level))+
+  geom_point(aes(color = infomost)) +
+  scale_x_continuous(labels = NULL) +
+  geom_smooth(se = FALSE) +
+  scale_y_continuous(labels = NULL)+
+  theme(legend.position = "bottom")
+
+
+```
+
+
+
+## 2.4 covid-19 info received from Information Sources
+```{R}
+tibble(
+  d_infohpb$use_news,
+  as.numeric(d_infohpb$use_news)) %>%
+  kable
+
+d_infohpb$use_news_coded %>% as.numeric %>% median(na.rm = TRUE)
+
+
+likert(dt_infouse) %>%
+  plot(type='bar')
+```
+
+## 2.5 Trust in information source
+```{R}
+
+likert(dt_infotrust) %>%
+  plot(type='bar')+
+  guides(color = guide_legend(override.aes = list(size = 5),keyheight =1,title = NULL))+
+  scale_color_manual(breaks = 5:1,
+                     labels = rev(c("Very Distrustful","Distrustful", "Neutral","Trustful","Very Trustful")), 
+                     values = c("tan3","tan1","grey85","steelblue1","steelblue3"))
+
+
+```
+
+## 2.6 Health Protective Behaviours
+```{R}
+likert(dt_hpb) %>%
+  plot(type='bar')
+
+
+# visualize dependent variables
+ggplot(df, aes(x = hpb_scores, y = ..density..)) + geom_histogram(fill = "blue", colour = "grey60", size = 0.2, alpha = 0.2) + geom_density()
+
+
+
+```
+
+
+## 2.6.1 geom_point: hpb
+```{r}
+# Create new dataset with mean value of hpb
+coded_hpb<- 
+  coded_summary %>%
+  select(starts_with('hp_'))%>%
+  lapply(
+    mean, na.rm = TRUE
+  ) 
+
+coded_hpb <- tibble(
+  Item = coded_hpb %>% names,
+  mean = coded_hpb %>% unlist
+)
+
+coded_hpb
+
+coded_hpb %>%
+  ggplot(
+    aes(x = Item, y = mean)
+  ) +
+  geom_point() +
+  scale_x_discrete(name = NULL, limits = c(
+    "hp_hand_coded","hp_supp_coded","hp_clean_coded","hp_mask_coded","hp_win_coded","hp_sdist_coded","hp_dietexc_coded","hp_avdpt_coded","hp_onlime_coded","hp_home_coded"),
+                   labels= c("Wash hand with sanitizer","Take dietary supplements","Disinfect surface","Wear face masks","Stay in well ventilated areas","Keep social distance","Maintain healthy diet and exercise","Reduce use of public transport","Arrange meeting people online","Stay home when feeling unwell"))+
+  coord_flip()
+
+
+
+
+```
+
+# 3. Statistical Testing
+## 3.1 Test of demographic variables
+```{R}
+
+
+#change gender into dummy variable
+d_infohpb <- d_infohpb %>%
+  mutate(
+    female = gender == 'Female')
+
+# t test gender
+d_infohpb %>%
+  t.test(
+    hpb_scores~gender,
+    var.equal = FALSE,
+    data = .
+  )
+```
+```{r}
+
+#person cor test
+#cor test-gender(Female)
+
+d_infohpb %>%
+  mutate(female=female %>% as.numeric) %>%
+  cor.test(~ female+hpb_scores, data= .)
+
+#cor test-gender(Age)
+d_infohpb %>%
+  mutate(age=age %>% as.numeric) %>%
+  cor.test(~ age+hpb_scores, data= .)
+
+#cor test-gender(Eduqual)
+d_infohpb %>%
+  mutate(edqual=edqual %>% as.numeric) %>%
+  cor.test(~ edqual+hpb_scores, data= .)
+
+```
+
+
+## 3.2 Welch's Anova test of info-source variables
+```{r}
+
+ 
+#change [social media use] into dummy variable
+d_infohpb <- d_infohpb %>%
+  mutate(
+    social_media = infomost == 'Social Media   (e.g. Facebook, Twitter, YouTube, Weibo, Xiaohongshu)')
+
+
+# t test social media
+d_infohpb %>%
+  t.test(
+    hpb_scores~social_media,
+    var.equal = FALSE,
+    data = .
+  )
+
+
+
+```
+
+## Welch's ANOVA
+```{R}
+
+oneway.test(hpb_scores ~ social_media, data = d_infohpb, var.equal = FALSE)
+
+```
+
+ 
+```{R}
+wilcox.test(use_news_coded ~ gender, data=d_infohpb,paired=FALSE) 
+wilcox.test(use_gov_coded ~ gender, data=d_infohpb,paired=FALSE)
+
+wilcox.test(hpb_scores ~ gender, data=d_infohpb,paired=FALSE)
+
+```
+## H1: Test of hpb_scores ~ demographic variables
+```{R}
+wilcox.test(hpb_scores ~ gender, data=d_infohpb,paired=FALSE)
+kruskal.test(hpb_scores ~ age, data = d_infohpb) 
+kruskal.test(hpb_scores ~ edqual, data = d_infohpb) 
+
+ 
+```
+
+
+#4. Correlation
+## 4.1 Correlation Matrix-Spearsman
+```{R}
+df<- d_infohpb %>%
+  select(age,female,edqual,
+          use_news,use_gov,use_uni,use_smed,use_web,use_ff,use_doc,
+              tru_news,tru_gov,tru_uni,tru_smed,tru_web,tru_ff,tru_doc,
+         hpb_scores)
+
+
+library("Hmisc")
+df[] <- lapply(df, as.numeric)
+
+             
+res2 <- rcorr(as.matrix(df[]),type='spearman')
+res2_p <- res2[["P"]]
+res2_m <- res2[["r"]]
+
+df %>%
+  ggplot(
+    aes(x = Item, y = mean)
+  ) +
+  geom_point() +
+  coord_flip()
+
+
+
+M<-cor(df)
+head(round(M,2))
+corrplot(M, method="circle",tl.col="black")
+corrplot(M, method="color",tl.col="black")
+
+
+
+# ... : further arguments to pass to the native R cor.test function
+cor.mtest <- function(mat, ...) {
+    mat <- as.matrix(mat)
+    n <- ncol(mat)
+    p.mat<- matrix(NA, n, n)
+    diag(p.mat) <- 0
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            tmp <- cor.test(mat[, i], mat[, j], ...)
+            p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+        }
+    }
+  colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+  p.mat
+}
+# matrix of the p-value of the correlation
+p.mat <- cor.mtest(df)
+head(p.mat[, 1:5])
+
+# Leave blank on no significant coefficient
+corrplot(M, type="upper", order="hclust", 
+         p.mat = p.mat, sig.level = 0.5, insig = "blank")
+
+## Final Version of correlation matrix
+library(RColorBrewer)
+corrplot(M,tl.col="black",
+         col=brewer.pal(n=10, name="RdBu"))
+
+m %>%
+  ggplot(
+    aes(x = Item, y = mean)
+  ) +
+  geom_point() +
+
+```
+
+# 5. Linear Regression Model
+```{R}
+#Model 1
+d_infohpb %>%
+  mutate(
+    across(
+      .cols = c(age,female,edqual,infomost,
+                starts_with('use'),
+                starts_with('tru'),
+                starts_with('hp')),
+      .fns = as.numeric)) %>%
+  lm(hpb_scores~age+female+edqual+infomost,
+     data= .) %>%
+  summary
+
+
+#Model 2
+d_infohpb %>%
+  mutate(
+    across(
+      .cols = c(age,female,edqual,infomost,
+                starts_with('use'),
+                starts_with('tru'),
+                starts_with('hp')),
+      .fns = as.numeric)) %>%
+  lm(hpb_scores~age+female+edqual+infomost
+                +
+                use_news+use_gov+use_uni+use_smed+
+                use_web+use_ff+use_doc,
+     data= .) %>%
+  summary
+
+
+#Model 3
+d_infohpb %>%
+  mutate(
+    across(
+      .cols = c(age,female,edqual,infomost,
+                starts_with('use'),
+                starts_with('tru'),
+                starts_with('hp')),
+      .fns = as.numeric)) %>%
+  lm(hpb_scores~age+female+edqual+infomost+
+                tru_news+tru_gov+tru_uni+tru_smed+
+                tru_web+tru_ff+tru_doc,
+     data= .) %>%
+  summary
+
+
+#Model 4
+d_infohpb %>%
+  mutate(
+    across(
+      .cols = c(age,female,edqual,infomost,
+                starts_with('use'),
+                starts_with('tru'),
+                starts_with('hp')),
+      .fns = as.numeric)) %>%
+  lm(hpb_scores~age+female+edqual+infomost+
+                +
+                use_news+use_gov+use_uni+use_smed+
+                use_web+use_ff+use_doc
+                +
+                tru_news+tru_gov+tru_uni+tru_smed+
+                tru_web+tru_ff+tru_doc,
+     data= .) %>%
+  summary
+
+
+  ## Model test-1 only use
+d_infohpb %>%
+  mutate(
+    across(
+      .cols = c(age,female,infomost,covid_aff,covid_sick,info_worrry,
+                social_media,
+                starts_with('use'),
+                starts_with('tru'),
+                starts_with('hp')),
+      .fns = as.numeric)) %>%
+      lm(hpb_scores~age+female
+                +
+                use_news+use_gov+use_smed+use_ff
+                ,
+     data= .) %>%
+  summary
+  
+ ## Model test
+d_infohpb %>%
+  mutate(
+    across(
+      .cols = c(age,female,edqual,infomost,covid_aff,covid_sick,info_worrry,
+                social_media,
+                starts_with('use'),
+                starts_with('tru'),
+                starts_with('hp')),
+      .fns = as.numeric)) %>%
+      lm(hpb_scores~age+female+infomost+edqual
+              +use_ff+tru_smed
+                ,
+     data= .) %>%
+  summary
+
+```
+
+
+# rank-order model
+```{R}
+
+##use and trust level were dichotomised by coding the top2 levels as 1, the others as 0
+    
+df_logic <- read.csv('../data/df_logic.csv')
+
+
+##fit-use
+fit.use <- lm(hpb~female+age+edqual+
+                use_news+use_gov+use_uni
+                +use_smed+use_web+use_ff+use_doc
+                , data = df_logic)
+summary(fit.use) 
+
+```
+
+```{r}
+##fit-trust
+fit.trust <- lm(hpb~female+age+edqual
+                 +tru_news+tru_gov+tru_uni
+                +tru_smed+tru_web+tru_ff+tru_doc, data = df_logic) 
+summary(fit.trust)
+```
+
+```{R}
+
+
+fit.model1 <- lm(hpb~female+age
+                 +tru_uni
+                +use_smed+tru_ff, data = df_logic) 
+summary(fit.model1)
+```
+
+```{r}
+##fit-all
+fit.full <- lm(hpb~female+age+edqual
+                +use_news+use_gov+use_uni
+                +use_smed+use_web+use_ff+use_doc
+                +tru_news+tru_gov+tru_uni
+                +tru_smed+tru_web+tru_ff+tru_doc, data = df_logic)
+summary(fit.full)
+```
+
+```{r}
+
+df_logic2 <- read.csv('../data/df_logic2.csv')
+##fit-all
+```
+
+```{r}
+fit.full2 <- lm(hpb~female+age+edqual
+                +use_news+use_gov+use_uni
+                +use_smed+use_web+use_ff+use_doc
+                +tru_news+tru_gov+tru_uni
+                +tru_smed+tru_web+tru_ff+tru_doc, data = df_logic2)
+summary(fit.full2)
+```
